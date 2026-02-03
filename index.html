@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>DIN 1460 Transliteration</title>
+
+<style>
+body {
+  font-family: sans-serif;
+  max-width: 900px;
+  margin: 2rem auto;
+}
+textarea {
+  width: 100%;
+  height: 160px;
+}
+select, button {
+  margin-top: 0.5rem;
+  margin-right: 0.5rem;
+}
+</style>
+</head>
+
+<body>
+
+<h1>Transliteration nach DIN 1460</h1>
+
+<label for="lang">Sprache:</label><br>
+<select id="lang">
+  <option value="ru">Russisch</option>
+  <option value="uk">Ukrainisch</option>
+  <option value="be">Belarussisch</option>
+  <option value="sr">Serbisch</option>
+  <option value="bg">Bulgarisch</option>
+</select>
+
+<h3>Eingabetext</h3>
+<textarea id="input" placeholder="Kyrillischen Text hier eingeben"></textarea>
+
+<button onclick="transliterieren()">Transliterieren</button>
+<button onclick="ruecktransliterieren()">Rücktransliterieren</button>
+
+<h3>Ausgabe</h3>
+<textarea id="output" placeholder="Ergebnis"></textarea>
+
+<script>
+// =========================
+// TRANSLITERATIONSTABELLEN
+// =========================
+
+const tables = {
+
+ru: {
+"А":"A","а":"a","Б":"B","б":"b","В":"V","в":"v","Г":"G","г":"g",
+"Д":"D","д":"d","Е":"E","е":"e","Ё":"Ë","ё":"ë","Ж":"Ž","ж":"ž",
+"З":"Z","з":"z","И":"I","и":"i","Й":"J","й":"j","К":"K","к":"k",
+"Л":"L","л":"l","М":"M","м":"m","Н":"N","н":"n","О":"O","о":"o",
+"П":"P","п":"p","Р":"R","р":"r","С":"S","с":"s","Т":"T","т":"t",
+"У":"U","у":"u","Ф":"F","ф":"f","Х":"Ch","х":"ch","Ц":"C","ц":"c",
+"Ч":"Č","ч":"č","Ш":"Š","ш":"š","Щ":"Šč","щ":"šč",
+"Ы":"Y","ы":"y","Э":"È","э":"è","Ю":"Ju","ю":"ju","Я":"Ja","я":"ja"
+},
+
+uk: {
+"А":"A","а":"a","Б":"B","б":"b","В":"V","в":"v","Г":"H","г":"h",
+"Ґ":"G","ґ":"g","Д":"D","д":"d","Е":"E","е":"e","Є":"Je","є":"je",
+"Ж":"Ž","ж":"ž","З":"Z","з":"z","И":"Y","и":"y","І":"I","і":"i",
+"Ї":"Ji","ї":"ji","Й":"J","й":"j","К":"K","к":"k","Л":"L","л":"l",
+"М":"M","м":"m","Н":"N","н":"n","О":"O","о":"o","П":"P","п":"p",
+"Р":"R","р":"r","С":"S","с":"s","Т":"T","т":"t","У":"U","у":"u",
+"Ф":"F","ф":"f","Х":"Ch","х":"ch","Ц":"C","ц":"c","Ч":"Č","ч":"č",
+"Ш":"Š","ш":"š","Ю":"Ju","ю":"ju","Я":"Ja","я":"ja"
+},
+
+be: {
+"А":"A","а":"a","Б":"B","б":"b","В":"V","в":"v","Г":"H","г":"h",
+"Д":"D","д":"d","Е":"E","е":"e","Ё":"Ë","ё":"ë","Ж":"Ž","ж":"ž",
+"З":"Z","з":"z","І":"I","і":"i","Й":"J","й":"j","К":"K","к":"k",
+"Л":"L","л":"l","М":"M","м":"m","Н":"N","н":"n","О":"O","о":"o",
+"П":"P","п":"p","Р":"R","р":"r","С":"S","с":"s","Т":"T","т":"t",
+"У":"U","у":"u","Ў":"Ŭ","ў":"ŭ","Ф":"F","ф":"f","Х":"Ch","х":"ch",
+"Ц":"C","ц":"c","Ч":"Č","ч":"č","Ш":"Š","ш":"š","Ы":"Y","ы":"y",
+"Э":"È","э":"è","Ю":"Ju","ю":"ju","Я":"Ja","я":"ja"
+},
+
+sr: {
+"А":"A","а":"a","Б":"B","б":"b","В":"V","в":"v","Г":"G","г":"g",
+"Д":"D","д":"d","Ђ":"Đ","ђ":"đ","Е":"E","е":"e","Ж":"Ž","ж":"ž",
+"З":"Z","з":"z","И":"I","и":"i","Ј":"J","ј":"j","К":"K","к":"k",
+"Л":"L","л":"l","Љ":"Lj","љ":"lj","М":"M","м":"m","Н":"N","н":"n",
+"Њ":"Nj","њ":"nj","О":"O","о":"o","П":"P","п":"p","Р":"R","р":"r",
+"С":"S","с":"s","Т":"T","т":"t","Ћ":"Ć","ћ":"ć","У":"U","у":"u",
+"Ф":"F","ф":"f","Х":"H","х":"h","Ц":"C","ц":"c","Ч":"Č","ч":"č",
+"Џ":"Dž","џ":"dž","Ш":"Š","ш":"š"
+},
+
+bg: {
+"А":"A","а":"a","Б":"B","б":"b","В":"V","в":"v","Г":"G","г":"g",
+"Д":"D","д":"d","Е":"E","е":"e","Ж":"Ž","ж":"ž","З":"Z","з":"z",
+"И":"I","и":"i","Й":"J","й":"j","К":"K","к":"k","Л":"L","л":"l",
+"М":"M","м":"m","Н":"N","н":"n","О":"O","о":"o","П":"P","п":"p",
+"Р":"R","р":"r","С":"S","с":"s","Т":"T","т":"t","У":"U","у":"u",
+"Ф":"F","ф":"f","Х":"Ch","х":"ch","Ц":"C","ц":"c","Ч":"Č","ч":"č",
+"Ш":"Š","ш":"š","Щ":"Št","щ":"št","Ъ":"Ă","ъ":"ă","Ю":"Ju","ю":"ju",
+"Я":"Ja","я":"ja"
+}
+
+};
+
+// =========================
+// FUNKTIONEN
+// =========================
+
+function transliterieren() {
+  let text = document.getElementById("input").value;
+  let lang = document.getElementById("lang").value;
+  let map = tables[lang];
+
+  for (let key in map) {
+    text = text.split(key).join(map[key]);
+  }
+
+  document.getElementById("output").value = text;
+}
+
+function ruecktransliterieren() {
+  let text = document.getElementById("input").value;
+  let lang = document.getElementById("lang").value;
+
+  let map = tables[lang];
+  let reverse = {};
+
+  for (let key in map) {
+    reverse[map[key]] = key;
+  }
+
+  let keys = Object.keys(reverse).sort((a,b)=>b.length-a.length);
+  for (let k of keys) {
+    text = text.split(k).join(reverse[k]);
+  }
+
+  document.getElementById("output").value = text;
+}
+</script>
+
+</body>
+</html>
