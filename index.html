@@ -1,4 +1,4 @@
-<<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="de">
 <head>
 <meta charset="UTF-8">
@@ -11,6 +11,13 @@ body {
   margin: 2rem auto;
 }
 
+.flex-row {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
 select, button {
   margin: 0.3rem 0.3rem 0.3rem 0;
 }
@@ -21,6 +28,7 @@ select, button {
   border: 1px solid #ccc;
   white-space: pre-wrap;
   font-family: inherit;
+  overflow-wrap: break-word;
 }
 
 .ambig {
@@ -32,44 +40,56 @@ select, button {
   font-size: 0.9rem;
   color: #555;
 }
+
+label {
+  font-weight: bold;
+}
 </style>
 </head>
 
 <body>
 
-<h1>Transliteration</h1>
+<h1>Transliterationstool</h1>
 
-<label>Sprache:</label><br>
-<select id="lang">
-  <option value="ru">Russisch</option>
-</select>
+<div class="flex-row">
+  <div>
+    <label>Sprache:</label><br>
+    <select id="lang">
+      <option value="ru">Russisch</option>
+    </select>
+  </div>
 
-<br><br>
+  <div>
+    <label>Transliterationssystem:</label><br>
+    <select id="systemFrom">
+      <option value="DIN">DIN 1460</option>
+      <option value="ALA">ALA-LC</option>
+      <option value="BL">British Library</option>
+      <option value="BNF">BnF</option>
+    </select>
+  </div>
 
-<label>System (Quelle):</label><br>
-<select id="systemFrom">
-  <option value="DIN">DIN 1460</option>
-  <option value="ALA">ALA-LC</option>
-  <option value="BL">British Library</option>
-  <option value="BNF">BnF</option>
-</select>
-
-<label>Zielsystem (für Umtransliteration):</label><br>
-<select id="systemTo">
-  <option value="DIN">DIN 1460</option>
-  <option value="ALA">ALA-LC</option>
-  <option value="BL">British Library</option>
-  <option value="BNF">BnF</option>
-</select>
+  <div>
+    <label>Ausgabe Umtransliteration:</label><br>
+    <select id="systemTo">
+      <option value="DIN">DIN 1460</option>
+      <option value="ALA">ALA-LC</option>
+      <option value="BL">British Library</option>
+      <option value="BNF">BnF</option>
+    </select>
+  </div>
+</div>
 
 <h3>Eingabe</h3>
 <div id="inputView" class="textview" contenteditable
      oninput="syncInput(); markInputAmbiguous();"></div>
 <textarea id="input" hidden></textarea>
 
-<button onclick="doTransliteration()">Transliterieren</button>
-<button onclick="doReverse()">Rücktransliterieren</button>
-<button onclick="doUmtransliteration()">Umtransliterieren</button>
+<div class="flex-row">
+  <button onclick="doTransliteration()">Transliterieren</button>
+  <button onclick="doReverse()">Rücktransliteration</button>
+  <button onclick="doUmtransliteration()">Umtransliteration</button>
+</div>
 
 <h3>Ausgabe</h3>
 <div id="outputView" class="textview"></div>
@@ -100,8 +120,7 @@ const systems = {
       "Ы":"Y","ы":"y","Э":"È","э":"è","Ю":"Ju","ю":"ju","Я":"Ja","я":"ja"
     }
   },
-
-  ALA: { ru: {} },   // vorbereitet
+  ALA: { ru: {} },
   BL:  { ru: {} },
   BNF: { ru: {} }
 };
@@ -129,12 +148,14 @@ function syncInput() {
   input.value = inputView.innerText;
 }
 
+// Transliteration
 function transliterate(text, system, lang) {
   const map = systems[system][lang];
   for (let k in map) text = text.split(k).join(map[k]);
   return text;
 }
 
+// Rücktransliteration
 function reverseTransliterate(text, system, lang) {
   const map = systems[system][lang];
   const reverse = {};
@@ -149,6 +170,7 @@ function reverseTransliterate(text, system, lang) {
 // MARKIERUNG
 // =========================
 
+// Eingabe
 function markInputAmbiguous() {
   const lang = langSelect.value;
   const system = systemFrom.value;
@@ -160,77 +182,3 @@ function markInputAmbiguous() {
 
   for (let k of keys) {
     const re = new RegExp(k, "g");
-    text = text.replace(re, `<span class="ambig">${k}</span>`);
-  }
-  inputView.innerHTML = text;
-}
-
-function markOutputAmbiguous(text, lang, system) {
-  const amb = ambiguous?.[lang]?.[system];
-  if (!amb) return text;
-
-  for (let k in amb) {
-    amb[k].forEach(cyr => {
-      const lat = systems[system][lang][cyr];
-      if (lat) {
-        const re = new RegExp(lat, "g");
-        text = text.replace(re, `<span class="ambig">${lat}</span>`);
-      }
-    });
-  }
-  return text;
-}
-
-// =========================
-// BUTTON-AKTIONEN
-// =========================
-
-function doTransliteration() {
-  syncInput();
-  const lang = langSelect.value;
-  const system = systemFrom.value;
-
-  let result = transliterate(input.value, system, lang);
-  outputView.innerHTML = markOutputAmbiguous(result, lang, system);
-  output.value = result;
-}
-
-function doReverse() {
-  syncInput();
-  const lang = langSelect.value;
-  const system = systemFrom.value;
-
-  let result = reverseTransliterate(input.value, system, lang);
-  outputView.innerText = result;
-  output.value = result;
-}
-
-function doUmtransliteration() {
-  syncInput();
-  const lang = langSelect.value;
-  const from = systemFrom.value;
-  const to = systemTo.value;
-
-  let kyr = reverseTransliterate(input.value, from, lang);
-  let result = transliterate(kyr, to, lang);
-
-  outputView.innerHTML = markOutputAmbiguous(result, lang, to);
-  output.value = result;
-}
-
-function copyOutput() {
-  navigator.clipboard.writeText(output.value);
-}
-
-// Shortcuts
-const inputView = document.getElementById("inputView");
-const outputView = document.getElementById("outputView");
-const input = document.getElementById("input");
-const output = document.getElementById("output");
-const langSelect = document.getElementById("lang");
-const systemFrom = document.getElementById("systemFrom");
-const systemTo = document.getElementById("systemTo");
-</script>
-
-</body>
-</html>
