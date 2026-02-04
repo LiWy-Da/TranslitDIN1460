@@ -3,64 +3,29 @@
 <head>
 <meta charset="UTF-8">
 <title>Transliterationstool</title>
-
 <style>
-body {
-  font-family: sans-serif;
-  max-width: 950px;
-  margin: 2rem auto;
-}
-
-.flex-row {
-  display: flex;
-  gap: 1rem;
-  align-items: center;
-  flex-wrap: wrap;
-}
-
-select, button {
-  margin: 0.3rem 0.3rem 0.3rem 0;
-}
-
-.textview {
-  min-height: 160px;
-  padding: 0.5rem;
-  border: 1px solid #ccc;
-  white-space: pre-wrap;
-  font-family: inherit;
-  overflow-wrap: break-word;
-}
-
-.ambig {
-  background: #fff3a0;
-  font-weight: bold;
-}
-
-.hint {
-  font-size: 0.9rem;
-  color: #555;
-}
-
-label {
-  font-weight: bold;
-}
+body { font-family:sans-serif; max-width:950px; margin:2rem auto; }
+.flex-row { display:flex; gap:1rem; align-items:flex-start; flex-wrap:wrap; }
+select, button { margin:0.3rem 0.3rem 0.3rem 0; }
+.textview { min-height:160px; padding:0.5rem; border:1px solid #ccc; white-space:pre-wrap; font-family:inherit; overflow-wrap:break-word; }
+.ambig { background:#fff3a0; font-weight:bold; }
+label { font-weight:bold; display:block; margin-bottom:0.2rem; }
 </style>
 </head>
-
 <body>
 
-<h1>Transliterationstool ****in Arbeit</h1>
+<h1>Transliterationstool</h1>
 
 <div class="flex-row">
   <div>
-    <label>Sprache:</label><br>
+    <label for="lang">Sprache:</label>
     <select id="lang">
       <option value="ru">Russisch</option>
     </select>
   </div>
 
   <div>
-    <label>Transliterationssystem:</label><br>
+    <label for="systemFrom">Transliterationssystem (Quelle):</label>
     <select id="systemFrom">
       <option value="DIN">DIN 1460</option>
       <option value="ALA">ALA-LC</option>
@@ -70,7 +35,7 @@ label {
   </div>
 
   <div>
-    <label>Ausgabe Umtransliteration:</label><br>
+    <label for="systemTo">Ausgabe Umtransliteration (Zielsystem):</label>
     <select id="systemTo">
       <option value="DIN">DIN 1460</option>
       <option value="ALA">ALA-LC</option>
@@ -96,16 +61,15 @@ label {
 
 <button onclick="copyOutput()">Copy</button>
 
-<p class="hint">
+<p style="font-size:0.9rem; color:#555;">
 ⚠️ Gelb markierte Stellen sind mehrdeutig und können ohne Kontext
 nicht eindeutig (rück-/um-)transliteriert werden.
 </p>
 
 <script>
 // =========================
-// TRANSLITERATIONSSYSTEME FÜR RUSSISCH
+// TRANSLITERATIONSSYSTEME
 // =========================
-
 const systems = {
   DIN: {
     ru: {
@@ -137,8 +101,8 @@ const systems = {
       "Д":"D","д":"d","Е":"E","е":"e","Ё":"Yo","ё":"yo","Ж":"Zh","ж":"zh",
       "З":"Z","з":"z","И":"I","и":"i","Й":"Y","й":"y","К":"K","к":"k",
       "Л":"L","л":"l","М":"M","м":"m","Н":"N","н":"n","О":"O","о",
-      "П":"P","п":"p","Р":"R","р":"r","С":"S","с":"s","Т":"T","т","У":"U","у":"u",
-      "Ф":"F","ф":"f","Х":"Kh","х":"kh","Ц":"Ts","ц":"ts","Ч":"Ch","ч":"ch",
+      "П":"P","п":"p","Р":"R","р":"r","С":"S","с":"s","Т":"T","т","У":"U","у",
+      "Ф":"F","ф":"f","Х":"Kh","х":"kh","Ц":"Ts","ц":"ts","Ч":"Ch","ч",
       "Ш":"Sh","ш":"sh","Щ":"Shch","щ":"shch",
       "Ы":"Y","ы":"y","Э":"E","э":"e","Ю":"Yu","ю":"yu","Я":"Ya","я":"ya"
     }
@@ -147,12 +111,12 @@ const systems = {
     ru: {
       "А":"A","а":"a","Б":"B","б":"b","В":"V","в":"v","Г":"G","г":"g",
       "Д":"D","д":"d","Е":"E","е":"e","Ё":"Ë","ё":"ë","Ж":"Ž","ж":"ž",
-      "З":"Z","з":"z","И":"I","и":"i","Й":"Ĭ","й":"ĭ","К":"K","к":"k",
+      "З":"Z","з":"z","И":"I","и":"i","Й":"Ĭ","й":"ĭ","К":"K","к",
       "Л":"L","л":"l","М":"M","м":"m","Н":"N","н","О":"O","о",
-      "П":"P","п":"p","Р":"R","р":"r","С":"S","с":"s","Т":"T","т","У":"U","у":"u",
-      "Ф":"F","ф":"f","Х":"Kh","х":"kh","Ц":"Ts","ц":"ts","Ч":"Ch","ч":"ch",
-      "Ш":"Š","ш":"š","Щ":"Št","щ":"št","Ы":"Y","ы":"y","Э":"È","э":"è",
-      "Ю":"I͡u","ю":"i͡u","Я":"I͡a","я":"i͡a"
+      "П":"P","п":"p","Р":"R","р":"r","С":"S","с","Т":"T","т","У":"U","у",
+      "Ф":"F","ф":"f","Х":"Kh","х":"kh","Ц":"Ts","ц":"ts","Ч":"Ch","ч",
+      "Ш":"Š","ш","Щ":"Št","щ":"št",
+      "Ы":"Y","ы":"y","Э":"È","э":"è","Ю":"I͡u","ю":"i͡u","Я":"I͡a","я":"i͡a"
     }
   }
 };
@@ -160,27 +124,19 @@ const systems = {
 // =========================
 // AMBIGUITÄTEN
 // =========================
-
 const ambiguous = {
   ru: {
-    DIN: { "ch": ["Х","Ч"], "šč": ["Щ","ШЧ"], "e": ["Е","Э"], "j": ["Й","Ь"] },
-    ALA: { "Kh": ["Х"], "Shch": ["Щ"], "I͡u": ["Ю"], "I͡a": ["Я"] },
-    BL:  { "Kh": ["Х"], "Shch": ["Щ"], "Yu": ["Ю"], "Ya": ["Я"] },
-    BNF: { "Kh": ["Х"], "Št": ["Щ"], "I͡u": ["Ю"], "I͡a": ["Я"] }
+    DIN: { "ch":["Х","Ч"], "šč":["Щ","ШЧ"], "e":["Е","Э"], "j":["Й","Ь"] },
+    ALA: { "Kh":["Х"], "Shch":["Щ"], "I͡u":["Ю"], "I͡a":["Я"] },
+    BL:  { "Kh":["Х"], "Shch":["Щ"], "Yu":["Ю"], "Ya":["Я"] },
+    BNF: { "Kh":["Х"], "Št":["Щ"], "I͡u":["Ю"], "I͡a":["Я"] }
   }
 };
 
 // =========================
 // HILFSFUNKTIONEN
 // =========================
-
-function escapeRegExp(string) {
-  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
-
-function syncInput() {
-  input.value = inputView.innerText;
-}
+function escapeRegExp(string) { return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
 
 function transliterate(text, system, lang) {
   const map = systems[system][lang];
@@ -192,44 +148,19 @@ function reverseTransliterate(text, system, lang) {
   const map = systems[system][lang];
   const reverse = {};
   for (let k in map) reverse[map[k]] = k;
-
   const keys = Object.keys(reverse).sort((a,b)=>b.length-a.length);
   for (let k of keys) text = text.split(k).join(reverse[k]);
   return text;
 }
 
-// =========================
-// MARKIERUNG
-// =========================
-
-function markInputAmbiguous() {
-  const lang = langSelect.value;
-  const system = systemFrom.value;
+function markAmbiguous(text, lang, system) {
   const amb = ambiguous?.[lang]?.[system];
-  if (!amb) {
-    inputView.innerHTML = inputView.innerText;
-    return;
-  }
-
-  let text = inputView.innerText;
+  if(!amb) return text;
   const keys = Object.keys(amb).sort((a,b)=>b.length-a.length);
-  for (let k of keys) {
-    const re = new RegExp(escapeRegExp(k), "g");
-    text = text.replace(re, `<span class="ambig">${k}</span>`);
-  }
-  inputView.innerHTML = text;
-}
-
-function markOutputAmbiguous(text, lang, system) {
-  const amb = ambiguous?.[lang]?.[system];
-  if (!amb) return text;
-
-  const keys = Object.keys(amb).sort((a,b)=>b.length-a.length);
-
-  for (let k of keys) {
-    const latinEquivs = amb[k].map(cyr => systems[system][lang][cyr]).filter(Boolean);
-    latinEquivs.forEach(lat => {
-      const re = new RegExp(escapeRegExp(lat), "g");
+  for(const k of keys){
+    const latinEquivs = amb[k].map(cyr=>systems[system][lang][cyr]).filter(Boolean);
+    latinEquivs.forEach(lat=>{
+      const re = new RegExp(escapeRegExp(lat),"g");
       text = text.replace(re, `<span class="ambig">${lat}</span>`);
     });
   }
@@ -237,64 +168,46 @@ function markOutputAmbiguous(text, lang, system) {
 }
 
 // =========================
-// BUTTON / AKTIONEN
+// BUTTON-FUNKTIONEN
 // =========================
-
 function doTransliteration() {
-  syncInput();
+  const text = input.value;
   const lang = langSelect.value;
   const system = systemFrom.value;
-  let result = transliterate(input.value, system, lang);
-  outputView.innerHTML = markOutputAmbiguous(result, lang, system);
+  const result = transliterate(text, system, lang);
   output.value = result;
+  outputView.innerHTML = markAmbiguous(result, lang, system);
 }
 
 function doReverse() {
-  syncInput();
+  const text = input.value;
   const lang = langSelect.value;
   const system = systemFrom.value;
-  let result = reverseTransliterate(input.value, system, lang);
-  outputView.innerHTML = markOutputAmbiguous(result, lang, system);
+  const result = reverseTransliterate(text, system, lang);
   output.value = result;
+  outputView.innerHTML = markAmbiguous(result, lang, system);
 }
 
 function doUmtransliteration() {
-  syncInput();
+  const text = input.value;
   const lang = langSelect.value;
   const from = systemFrom.value;
   const to = systemTo.value;
-
-  let kyr = reverseTransliterate(input.value, from, lang);
-  let result = transliterate(kyr, to, lang);
-
-  outputView.innerHTML = markOutputAmbiguous(result, lang, to);
+  const kyr = reverseTransliterate(text, from, lang);
+  const result = transliterate(kyr, to, lang);
   output.value = result;
+  outputView.innerHTML = markAmbiguous(result, lang, to);
 }
 
-function copyOutput() {
-  navigator.clipboard.writeText(output.value);
-}
+function copyOutput() { navigator.clipboard.writeText(output.value); }
 
 // =========================
-// ELEMENTREFERENZEN & LIVE-UPDATES
+// INPUT EVENT
 // =========================
-
-const inputView = document.getElementById("inputView");
-const outputView = document.getElementById("outputView");
-const input = document.getElementById("input");
-const output = document.getElementById("output");
-const langSelect = document.getElementById("lang");
-const systemFrom = document.getElementById("systemFrom");
-const systemTo = document.getElementById("systemTo");
-
-inputView.addEventListener("input", () => {
-  syncInput();
-  markInputAmbiguous();
+inputView.addEventListener("input", ()=>{
+  input.value = inputView.innerText; // Rohtext speichern
   doTransliteration();
 });
 </script>
-
 </body>
 </html>
-
-
