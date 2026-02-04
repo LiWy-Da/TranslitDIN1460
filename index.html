@@ -112,7 +112,7 @@ const systems = {
       "А":"A","а":"a","Б":"B","б":"b","В":"V","в":"v","Г":"G","г":"g",
       "Д":"D","д":"d","Е":"E","е":"e","Ё":"Ë","ё":"ë","Ж":"Ž","ж":"ž",
       "З":"Z","з":"z","И":"I","и":"i","Й":"J","й":"j","К":"K","к":"k",
-      "Л":"L","л":"l","М":"M","м":"m","Н":"N","н":"n","О":"O","о":"o",
+      "Л":"L","л":"l","М":"M","м":"m","Н":"N","н":"n","О":"O","о",
       "П":"P","п":"p","Р":"R","р":"r","С":"S","с":"s","Т":"T","т":"t",
       "У":"U","у":"u","Ф":"F","ф":"f","Х":"Ch","х":"ch","Ц":"C","ц":"c",
       "Ч":"Č","ч":"č","Ш":"Š","ш":"š","Щ":"Šč","щ":"šč",
@@ -124,7 +124,7 @@ const systems = {
       "А":"A","а":"a","Б":"B","б":"b","В":"V","в":"v","Г":"G","г":"g",
       "Д":"D","д":"d","Е":"E","е":"e","Ё":"Ë","ё":"ë","Ж":"Zh","ж":"zh",
       "З":"Z","з":"z","И":"I","и":"i","Й":"Ĭ","й":"ĭ","К":"K","к":"k",
-      "Л":"L","л":"l","М":"M","м":"m","Н":"N","н":"n","О":"O","о":"o",
+      "Л":"L","л":"l","М":"M","м":"m","Н":"N","н":"n","О":"O","о",
       "П":"P","п":"p","Р":"R","р":"r","С":"S","с":"s","Т":"T","т":"t",
       "У":"U","у":"u","Ф":"F","ф":"f","Х":"Kh","х":"kh","Ц":"Ts","ц":"ts",
       "Ч":"Ch","ч":"ch","Ш":"Sh","ш":"sh","Щ":"Shch","щ":"shch",
@@ -136,7 +136,7 @@ const systems = {
       "А":"A","а":"a","Б":"B","б":"b","В":"V","в":"v","Г":"G","г":"g",
       "Д":"D","д":"d","Е":"E","е":"e","Ё":"Yo","ё":"yo","Ж":"Zh","ж":"zh",
       "З":"Z","з":"z","И":"I","и":"i","Й":"Y","й":"y","К":"K","к":"k",
-      "Л":"L","л":"l","М":"M","м":"m","Н":"N","н":"n","О":"O","о":"o",
+      "Л":"L","л":"l","М":"M","м":"m","Н":"N","н":"n","О":"O","о",
       "П":"P","п":"p","Р":"R","р":"r","С":"S","с":"s","Т":"T","т","У":"U","у":"u",
       "Ф":"F","ф":"f","Х":"Kh","х":"kh","Ц":"Ts","ц":"ts","Ч":"Ch","ч":"ch",
       "Ш":"Sh","ш":"sh","Щ":"Shch","щ":"shch",
@@ -148,7 +148,7 @@ const systems = {
       "А":"A","а":"a","Б":"B","б":"b","В":"V","в":"v","Г":"G","г":"g",
       "Д":"D","д":"d","Е":"E","е":"e","Ё":"Ë","ё":"ë","Ж":"Ž","ж":"ž",
       "З":"Z","з":"z","И":"I","и":"i","Й":"Ĭ","й":"ĭ","К":"K","к":"k",
-      "Л":"L","л":"l","М":"M","м":"m","Н":"N","н":"n","О":"O","о",
+      "Л":"L","л":"l","М":"M","м":"m","Н":"N","н","О":"O","о",
       "П":"P","п":"p","Р":"R","р":"r","С":"S","с":"s","Т":"T","т","У":"U","у":"u",
       "Ф":"F","ф":"f","Х":"Kh","х":"kh","Ц":"Ts","ц":"ts","Ч":"Ch","ч":"ch",
       "Ш":"Š","ш":"š","Щ":"Št","щ":"št","Ы":"Y","ы":"y","Э":"È","э":"è",
@@ -163,36 +163,20 @@ const systems = {
 
 const ambiguous = {
   ru: {
-    DIN: {
-      "ch": ["Х","Ч"],
-      "šč": ["Щ","ШЧ"],
-      "e": ["Е","Э"],
-      "j": ["Й","Ь"]
-    },
-    ALA: {
-      "Kh": ["Х"],
-      "Shch": ["Щ"],
-      "I͡u": ["Ю"],
-      "I͡a": ["Я"]
-    },
-    BL: {
-      "Kh": ["Х"],
-      "Shch": ["Щ"],
-      "Yu": ["Ю"],
-      "Ya": ["Я"]
-    },
-    BNF: {
-      "Kh": ["Х"],
-      "Št": ["Щ"],
-      "I͡u": ["Ю"],
-      "I͡a": ["Я"]
-    }
+    DIN: { "ch": ["Х","Ч"], "šč": ["Щ","ШЧ"], "e": ["Е","Э"], "j": ["Й","Ь"] },
+    ALA: { "Kh": ["Х"], "Shch": ["Щ"], "I͡u": ["Ю"], "I͡a": ["Я"] },
+    BL:  { "Kh": ["Х"], "Shch": ["Щ"], "Yu": ["Ю"], "Ya": ["Я"] },
+    BNF: { "Kh": ["Х"], "Št": ["Щ"], "I͡u": ["Ю"], "I͡a": ["Я"] }
   }
 };
 
 // =========================
 // HILFSFUNKTIONEN
 // =========================
+
+function escapeRegExp(string) {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
 
 function syncInput() {
   input.value = inputView.innerText;
@@ -230,7 +214,7 @@ function markInputAmbiguous() {
   let text = inputView.innerText;
   const keys = Object.keys(amb).sort((a,b)=>b.length-a.length);
   for (let k of keys) {
-    const re = new RegExp(k, "g");
+    const re = new RegExp(escapeRegExp(k), "g");
     text = text.replace(re, `<span class="ambig">${k}</span>`);
   }
   inputView.innerHTML = text;
@@ -245,7 +229,7 @@ function markOutputAmbiguous(text, lang, system) {
   for (let k of keys) {
     const latinEquivs = amb[k].map(cyr => systems[system][lang][cyr]).filter(Boolean);
     latinEquivs.forEach(lat => {
-      const re = new RegExp(lat, "g");
+      const re = new RegExp(escapeRegExp(lat), "g");
       text = text.replace(re, `<span class="ambig">${lat}</span>`);
     });
   }
@@ -253,7 +237,7 @@ function markOutputAmbiguous(text, lang, system) {
 }
 
 // =========================
-// BUTTON / AUTOMATISCHE AKTIONEN
+// BUTTON / AKTIONEN
 // =========================
 
 function doTransliteration() {
@@ -303,13 +287,12 @@ const langSelect = document.getElementById("lang");
 const systemFrom = document.getElementById("systemFrom");
 const systemTo = document.getElementById("systemTo");
 
-// Live-Update bei jeder Eingabe
 inputView.addEventListener("input", () => {
   syncInput();
   markInputAmbiguous();
   doTransliteration();
 });
-
 </script>
+
 </body>
 </html>
