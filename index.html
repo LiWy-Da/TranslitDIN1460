@@ -7,7 +7,7 @@
 <style>
 body {
   font-family: sans-serif;
-  max-width: 900px;
+  max-width: 950px;
   margin: 2rem auto;
 }
 
@@ -81,8 +81,7 @@ label {
 </div>
 
 <h3>Eingabe</h3>
-<div id="inputView" class="textview" contenteditable
-     oninput="syncInput(); markInputAmbiguous();"></div>
+<div id="inputView" class="textview" contenteditable></div>
 <textarea id="input" hidden></textarea>
 
 <div class="flex-row">
@@ -104,7 +103,7 @@ nicht eindeutig (rück-/um-)transliteriert werden.
 
 <script>
 // =========================
-// TRANSLITERATIONSSYSTEME
+// TRANSLITERATIONSSYSTEME FÜR RUSSISCH
 // =========================
 
 const systems = {
@@ -120,9 +119,42 @@ const systems = {
       "Ы":"Y","ы":"y","Э":"È","э":"è","Ю":"Ju","ю":"ju","Я":"Ja","я":"ja"
     }
   },
-  ALA: { ru: {} },
-  BL:  { ru: {} },
-  BNF: { ru: {} }
+  ALA: {
+    ru: {
+      "А":"A","а":"a","Б":"B","б":"b","В":"V","в":"v","Г":"G","г":"g",
+      "Д":"D","д":"d","Е":"E","е":"e","Ё":"Ë","ё":"ë","Ж":"Zh","ж":"zh",
+      "З":"Z","з":"z","И":"I","и":"i","Й":"Ĭ","й":"ĭ","К":"K","к":"k",
+      "Л":"L","л":"l","М":"M","м":"m","Н":"N","н":"n","О":"O","о":"o",
+      "П":"P","п":"p","Р":"R","р":"r","С":"S","с":"s","Т":"T","т":"t",
+      "У":"U","у":"u","Ф":"F","ф":"f","Х":"Kh","х":"kh","Ц":"Ts","ц":"ts",
+      "Ч":"Ch","ч":"ch","Ш":"Sh","ш":"sh","Щ":"Shch","щ":"shch",
+      "Ы":"Y","ы":"y","Э":"E","э":"e","Ю":"I͡u","ю":"i͡u","Я":"I͡a","я":"i͡a"
+    }
+  },
+  BL: {
+    ru: {
+      "А":"A","а":"a","Б":"B","б":"b","В":"V","в":"v","Г":"G","г":"g",
+      "Д":"D","д":"d","Е":"E","е":"e","Ё":"Yo","ё":"yo","Ж":"Zh","ж":"zh",
+      "З":"Z","з":"z","И":"I","и":"i","Й":"Y","й":"y","К":"K","к":"k",
+      "Л":"L","л":"l","М":"M","м":"m","Н":"N","н":"n","О":"O","о":"o",
+      "П":"P","п":"p","Р":"R","р":"r","С":"S","с":"s","Т":"T","т","У":"U","у":"u",
+      "Ф":"F","ф":"f","Х":"Kh","х":"kh","Ц":"Ts","ц":"ts","Ч":"Ch","ч":"ch",
+      "Ш":"Sh","ш":"sh","Щ":"Shch","щ":"shch",
+      "Ы":"Y","ы":"y","Э":"E","э":"e","Ю":"Yu","ю":"yu","Я":"Ya","я":"ya"
+    }
+  },
+  BNF: {
+    ru: {
+      "А":"A","а":"a","Б":"B","б":"b","В":"V","в":"v","Г":"G","г":"g",
+      "Д":"D","д":"d","Е":"E","е":"e","Ё":"Ë","ё":"ë","Ж":"Ž","ж":"ž",
+      "З":"Z","з":"z","И":"I","и":"i","Й":"Ĭ","й":"ĭ","К":"K","к":"k",
+      "Л":"L","л":"l","М":"M","м":"m","Н":"N","н":"n","О":"O","о",
+      "П":"P","п":"p","Р":"R","р":"r","С":"S","с":"s","Т":"T","т","У":"U","у":"u",
+      "Ф":"F","ф":"f","Х":"Kh","х":"kh","Ц":"Ts","ц":"ts","Ч":"Ch","ч":"ch",
+      "Ш":"Š","ш":"š","Щ":"Št","щ":"št","Ы":"Y","ы":"y","Э":"È","э":"è",
+      "Ю":"I͡u","ю":"i͡u","Я":"I͡a","я":"i͡a"
+    }
+  }
 };
 
 // =========================
@@ -136,6 +168,24 @@ const ambiguous = {
       "šč": ["Щ","ШЧ"],
       "e": ["Е","Э"],
       "j": ["Й","Ь"]
+    },
+    ALA: {
+      "Kh": ["Х"],
+      "Shch": ["Щ"],
+      "I͡u": ["Ю"],
+      "I͡a": ["Я"]
+    },
+    BL: {
+      "Kh": ["Х"],
+      "Shch": ["Щ"],
+      "Yu": ["Ю"],
+      "Ya": ["Я"]
+    },
+    BNF: {
+      "Kh": ["Х"],
+      "Št": ["Щ"],
+      "I͡u": ["Ю"],
+      "I͡a": ["Я"]
     }
   }
 };
@@ -148,14 +198,12 @@ function syncInput() {
   input.value = inputView.innerText;
 }
 
-// Transliteration
 function transliterate(text, system, lang) {
   const map = systems[system][lang];
   for (let k in map) text = text.split(k).join(map[k]);
   return text;
 }
 
-// Rücktransliteration
 function reverseTransliterate(text, system, lang) {
   const map = systems[system][lang];
   const reverse = {};
@@ -170,15 +218,98 @@ function reverseTransliterate(text, system, lang) {
 // MARKIERUNG
 // =========================
 
-// Eingabe
 function markInputAmbiguous() {
   const lang = langSelect.value;
   const system = systemFrom.value;
   const amb = ambiguous?.[lang]?.[system];
-  if (!amb) return;
+  if (!amb) {
+    inputView.innerHTML = inputView.innerText;
+    return;
+  }
 
   let text = inputView.innerText;
   const keys = Object.keys(amb).sort((a,b)=>b.length-a.length);
-
   for (let k of keys) {
     const re = new RegExp(k, "g");
+    text = text.replace(re, `<span class="ambig">${k}</span>`);
+  }
+  inputView.innerHTML = text;
+}
+
+function markOutputAmbiguous(text, lang, system) {
+  const amb = ambiguous?.[lang]?.[system];
+  if (!amb) return text;
+
+  const keys = Object.keys(amb).sort((a,b)=>b.length-a.length);
+
+  for (let k of keys) {
+    const latinEquivs = amb[k].map(cyr => systems[system][lang][cyr]).filter(Boolean);
+    latinEquivs.forEach(lat => {
+      const re = new RegExp(lat, "g");
+      text = text.replace(re, `<span class="ambig">${lat}</span>`);
+    });
+  }
+  return text;
+}
+
+// =========================
+// BUTTON / AUTOMATISCHE AKTIONEN
+// =========================
+
+function doTransliteration() {
+  syncInput();
+  const lang = langSelect.value;
+  const system = systemFrom.value;
+  let result = transliterate(input.value, system, lang);
+  outputView.innerHTML = markOutputAmbiguous(result, lang, system);
+  output.value = result;
+}
+
+function doReverse() {
+  syncInput();
+  const lang = langSelect.value;
+  const system = systemFrom.value;
+  let result = reverseTransliterate(input.value, system, lang);
+  outputView.innerHTML = markOutputAmbiguous(result, lang, system);
+  output.value = result;
+}
+
+function doUmtransliteration() {
+  syncInput();
+  const lang = langSelect.value;
+  const from = systemFrom.value;
+  const to = systemTo.value;
+
+  let kyr = reverseTransliterate(input.value, from, lang);
+  let result = transliterate(kyr, to, lang);
+
+  outputView.innerHTML = markOutputAmbiguous(result, lang, to);
+  output.value = result;
+}
+
+function copyOutput() {
+  navigator.clipboard.writeText(output.value);
+}
+
+// =========================
+// ELEMENTREFERENZEN & LIVE-UPDATES
+// =========================
+
+const inputView = document.getElementById("inputView");
+const outputView = document.getElementById("outputView");
+const input = document.getElementById("input");
+const output = document.getElementById("output");
+const langSelect = document.getElementById("lang");
+const systemFrom = document.getElementById("systemFrom");
+const systemTo = document.getElementById("systemTo");
+
+// Live-Update bei jeder Eingabe
+inputView.addEventListener("input", () => {
+  syncInput();
+  markInputAmbiguous();
+  doTransliteration();
+});
+
+</script>
+</body>
+</html>
