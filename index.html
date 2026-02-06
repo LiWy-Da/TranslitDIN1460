@@ -3,211 +3,269 @@
 <head>
 <meta charset="UTF-8">
 <title>Transliterationstool</title>
+
 <style>
-body { font-family:sans-serif; max-width:950px; margin:2rem auto; }
-.flex-row { display:flex; gap:1rem; align-items:flex-start; flex-wrap:wrap; }
-select, button { margin:0.3rem 0.3rem 0.3rem 0; }
-.textview { min-height:160px; padding:0.5rem; border:1px solid #ccc; white-space:pre-wrap; font-family:inherit; overflow-wrap:break-word; }
-.ambig { background:#fff3a0; font-weight:bold; }
-label { font-weight:bold; display:block; margin-bottom:0.2rem; }
+body {
+  font-family: sans-serif;
+  max-width: 900px;
+  margin: 2rem auto;
+}
+textarea {
+  width: 100%;
+  height: 160px;
+}
+select, button {
+  margin-top: 0.5rem;
+  margin-right: 0.5rem;
+}
+label {
+  display:block;
+  margin-top:0.5rem;
+}
 </style>
 </head>
-<body>
-
-<h1>Transliterationstool</h1>
-
-<div class="flex-row">
-  <div>
-    <label for="lang">Sprache:</label>
-    <select id="lang">
-      <option value="ru">Russisch</option>
-    </select>
-  </div>
-
-  <div>
-    <label for="systemFrom">Transliterationssystem (Quelle):</label>
-    <select id="systemFrom">
-      <option value="DIN">DIN 1460</option>
-      <option value="ALA">ALA-LC</option>
-      <option value="BL">British Library</option>
-      <option value="BNF">BnF</option>
-    </select>
-  </div>
-
-  <div>
-    <label for="systemTo">Ausgabe Umtransliteration (Zielsystem):</label>
-    <select id="systemTo">
-      <option value="DIN">DIN 1460</option>
-      <option value="ALA">ALA-LC</option>
-      <option value="BL">British Library</option>
-      <option value="BNF">BnF</option>
-    </select>
-  </div>
-</div>
-
-<h3>Eingabe</h3>
-<div id="inputView" class="textview" contenteditable></div>
-<textarea id="input" hidden></textarea>
-
-<div class="flex-row">
-  <button onclick="doTransliteration()">Transliterieren</button>
-  <button onclick="doReverse()">Rücktransliteration</button>
-  <button onclick="doUmtransliteration()">Umtransliteration</button>
-</div>
-
-<h3>Ausgabe</h3>
-<div id="outputView" class="textview"></div>
-<textarea id="output" hidden></textarea>
-
-<button onclick="copyOutput()">Copy</button>
-
-<p style="font-size:0.9rem; color:#555;">
-⚠️ Gelb markierte Stellen sind mehrdeutig und können ohne Kontext
-nicht eindeutig (rück-/um-)transliteriert werden.
-</p>
 
 <script>
 // =========================
-// TRANSLITERATIONSSYSTEME
+// TRANSLITERATIONSTABELLEN
 // =========================
-const systems = {
+const tables = {
   DIN: {
-    ru: {
-      "А":"A","а":"a","Б":"B","б":"b","В":"V","в":"v","Г":"G","г":"g",
-      "Д":"D","д":"d","Е":"E","е":"e","Ё":"Ë","ё":"ë","Ж":"Ž","ж":"ž",
-      "З":"Z","з":"z","И":"I","и":"i","Й":"J","й":"j","К":"K","к":"k",
-      "Л":"L","л":"l","М":"M","м":"m","Н":"N","н":"n","О":"O","о",
-      "П":"P","п":"p","Р":"R","р":"r","С":"S","с":"s","Т":"T","т":"t",
-      "У":"U","у":"u","Ф":"F","ф":"f","Х":"Ch","х":"ch","Ц":"C","ц":"c",
-      "Ч":"Č","ч":"č","Ш":"Š","ш":"š","Щ":"Šč","щ":"šč",
-      "Ы":"Y","ы":"y","Э":"È","э":"è","Ю":"Ju","ю":"ju","Я":"Ja","я":"ja"
-    }
+    ru: {"А":"A","а":"a","Б":"B","б":"b","В":"V","в":"v","Г":"G","г":"g",
+         "Д":"D","д":"d","Е":"E","е":"e","Ё":"Ë","ё":"ë","Ж":"Ž","ж":"ž",
+         "З":"Z","з":"z","И":"I","и":"i","Й":"J","й":"j","К":"K","к":"k",
+         "Л":"L","л":"l","М":"M","м":"m","Н":"N","н":"n","О":"O","о":"o",
+         "П":"P","п":"p","Р":"R","р":"r","С":"S","с":"s","Т":"T","т":"t",
+         "У":"U","у":"u","Ф":"F","ф":"f","Х":"Ch","х":"ch","Ц":"C","ц":"c",
+         "Ч":"Č","ч":"č","Ш":"Š","ш":"š","Щ":"Šč","щ":"šč",
+         "Ы":"Y","ы":"y","Э":"Ė","э":"ė","Ю":"Ju","ю":"ju","Я":"Ja","я":"ja","Ь":"ʹ","ь":"ʹ","Ъ":"ʺ","ъ":"ʺ"},
+    uk: {"А":"A","а":"a","Б":"B","б":"b","В":"V","в":"v","Г":"H","г":"h",
+         "Ґ":"G","ґ":"g","Д":"D","д":"d","Е":"E","е":"e","Є":"Je","є":"je",
+         "Ж":"Ž","ж":"ž","З":"Z","з":"z","И":"Y","и":"y","І":"I","і":"i",
+         "Ї":"Ï","ї":"ï","Й":"J","й":"j","К":"K","к":"k","Л":"L","л":"l",
+         "М":"M","м":"m","Н":"N","н":"n","О":"O","о":"o","П":"P","п":"p",
+         "Р":"R","р":"r","С":"S","с":"s","Т":"T","т":"t","У":"U","у":"u",
+         "Ф":"F","ф":"f","Х":"Ch","х":"ch","Ц":"C","ц":"c","Ч":"Č","ч":"č",
+         "Ш":"Š","ш":"š","Щ":"Šč","щ":"šč","Ю":"Ju","ю":"ju","Я":"Ja","я":"ja","'":"ʼ","Ь":"ʹ"},
+    be: {"А":"A","а":"a","Б":"B","б":"b","В":"V","в":"v","Г":"H","г":"h",
+         "Д":"D","д":"d","Е":"E","е":"e","Ё":"Ë","ё":"ë","Ж":"Ž","ж":"ž",
+         "З":"Z","з":"z","І":"I","і":"i","Й":"J","й":"j","К":"K","к":"k",
+         "Л":"L","л":"l","М":"M","м":"m","Н":"N","н":"n","О":"O","о":"o",
+         "П":"P","п":"p","Р":"R","р":"r","С":"S","с":"s","Т":"T","т":"t",
+         "У":"U","у":"u","Ў":"Ŭ","ў":"ŭ","Ф":"F","ф":"f","Х":"Ch","х":"ch",
+         "Ц":"C","ц":"c","Ч":"Č","ч":"č","Ш":"Š","ш":"š","Ы":"Y","ы":"y",
+         "Э":"Ė","э":"ė","Ю":"Ju","ю":"ju","Я":"Ja","я":"ja"},
+    sr: {"А":"A","а":"a","Б":"B","б":"b","В":"V","в":"v","Г":"G","г":"g",
+         "Д":"D","д":"d","Ђ":"Đ","ђ":"đ","Е":"E","е":"e","Ж":"Ž","ж":"ž",
+         "З":"Z","з":"z","И":"I","и":"i","Ј":"J","ј":"j","К":"K","к":"k",
+         "Л":"L","л":"l","Љ":"Lj","љ":"lj","М":"M","м":"m","Н":"N","н":"n",
+         "Њ":"Nj","њ":"nj","О":"O","о":"o","П":"P","п":"p","Р":"R","р":"r",
+         "С":"S","с":"s","Т":"T","т":"t","Ћ":"Ć","ћ":"ć","У":"U","у":"u",
+         "Ф":"F","ф":"f","Х":"H","х":"h","Ц":"C","ц":"c","Ч":"Č","ч":"č",
+         "Џ":"Dž","џ":"dž","Ш":"Š","ш":"š"},
+    bg: {"А":"A","а":"a","Б":"B","б":"b","В":"V","в":"v","Г":"G","г":"g",
+         "Д":"D","д":"d","Е":"E","е":"e","Ж":"Ž","ж":"ž","З":"Z","з":"z",
+         "И":"I","и":"i","Й":"J","й":"j","К":"K","к":"k","Л":"L","л":"l",
+         "М":"M","м":"m","Н":"N","н":"n","О":"O","о":"o","П":"P","п":"p","Р":"R","р":"r",
+         "С":"S","с":"s","Т":"T","т":"t","У":"U","у":"u","Ф":"F","ф":"f","Х":"Ch","х":"ch",
+         "Ц":"C","ц":"c","Ч":"Č","ч":"č","Ш":"Š","ш":"š","Щ":"Št","щ":"št","Ъ":"Ă","ъ":"ă",
+         "Ю":"Ju","ю":"ju","Я":"Ja","я":"ja"}
   },
+ 
+
   ALA: {
     ru: {
       "А":"A","а":"a","Б":"B","б":"b","В":"V","в":"v","Г":"G","г":"g",
-      "Д":"D","д":"d","Е":"E","е":"e","Ё":"Ë","ё":"ë","Ж":"Zh","ж":"zh",
+      "Д":"D","д":"d","Е":"E","е":"e","Ё":"Ë","ё":"ë","Ж":"Zh","ж":"zh",
       "З":"Z","з":"z","И":"I","и":"i","Й":"Ĭ","й":"ĭ","К":"K","к":"k",
-      "Л":"L","л":"l","М":"M","м":"m","Н":"N","н":"n","О":"O","о",
+      "Л":"L","л":"l","М":"M","м":"m","Н":"N","н":"n","О":"O","о":"o",
       "П":"P","п":"p","Р":"R","р":"r","С":"S","с":"s","Т":"T","т":"t",
-      "У":"U","у":"u","Ф":"F","ф":"f","Х":"Kh","х":"kh","Ц":"Ts","ц":"ts",
+      "У":"U","у":"u","Ф":"F","ф":"f","Х":"Kh","х":"kh","Ц":"TS","ц":"t͡s",
       "Ч":"Ch","ч":"ch","Ш":"Sh","ш":"sh","Щ":"Shch","щ":"shch",
-      "Ы":"Y","ы":"y","Э":"E","э":"e","Ю":"I͡u","ю":"i͡u","Я":"I͡a","я":"i͡a"
-    }
-  },
-  BL: {
-    ru: {
+      "Ы":"Y","ы":"y","Э":"E","э":"e","Ю":"IU","ю":"iu","Я":"IA","я":"ia","Ъ":"ʺ","ъ":"ʺ","Ь":"ʹ","ь":"ʹ"
+    },
+
+    uk: {
+      "А":"A","а":"a","Б":"B","б":"b","В":"V","в":"v","Г":"H","г":"h",
+      "Ґ":"G","ґ":"g","Д":"D","д":"d","Е":"E","е":"e","Є":"IE","є":"ie",
+      "Ж":"ZH","ж":"z͡h","З":"Z","з":"z","И":"Y","и":"y","І":"I","і":"i",
+      "Ї":"Ï","ї":"ї","Й":"Ĭ","й":"ĭ","К":"K","к":"k","Л":"L","л":"l",
+      "М":"M","м":"m","Н":"N","н":"n","О":"O","о":"o","П":"P","п":"p",
+      "Р":"R","р":"r","С":"S","с":"s","Т":"T","т":"t","У":"U","у":"u",
+      "Ф":"F","ф":"f","Х":"Kh","х":"kh","Ц":"TS","ц":"t͡s",
+      "Ч":"Ch","ч":"ch","Ш":"Sh","ш":"sh","Щ":"Shch","Ю":"IU","ю":"iu","Я":"IA","я":"ia","'":"'","Ь":"ʹ"
+    },
+
+    be: {
+      "А":"A","а":"a","Б":"B","б":"b","В":"V","в":"v","Г":"H","г":"h",
+      "Д":"D","д":"d","Е":"E","е":"e","Ё":"Ë","ё":"ë","Ж":"Zh","ж":"zh",
+      "З":"Z","з":"z","І":"I","і":"i","Й":"Ĭ","й":"ĭ","К":"K","к":"k",
+      "Л":"L","л":"l","М":"M","м":"m","Н":"N","н":"n","О":"O","о":"o",
+      "П":"P","п":"p","Р":"R","р":"r","С":"S","с":"s","Т":"T","т":"t",
+      "У":"U","у":"u","Ў":"Ŭ","ў":"ŭ","Ф":"F","ф":"f","Х":"Kh","х":"kh",
+      "Ц":"Ts","ц":"ts","Ч":"Ch","ч":"ch","Ш":"Sh","ш":"sh",
+      "Ы":"Y","ы":"y","Э":"E","э":"e","Ю":"Iu","ю":"iu","Я":"Ia","я":"ia"
+    },
+
+    sr: {
       "А":"A","а":"a","Б":"B","б":"b","В":"V","в":"v","Г":"G","г":"g",
-      "Д":"D","д":"d","Е":"E","е":"e","Ё":"Yo","ё":"yo","Ж":"Zh","ж":"zh",
-      "З":"Z","з":"z","И":"I","и":"i","Й":"Y","й":"y","К":"K","к":"k",
-      "Л":"L","л":"l","М":"M","м":"m","Н":"N","н":"n","О":"O","о",
-      "П":"P","п":"p","Р":"R","р":"r","С":"S","с":"s","Т":"T","т","У":"U","у",
-      "Ф":"F","ф":"f","Х":"Kh","х":"kh","Ц":"Ts","ц":"ts","Ч":"Ch","ч",
-      "Ш":"Sh","ш":"sh","Щ":"Shch","щ":"shch",
-      "Ы":"Y","ы":"y","Э":"E","э":"e","Ю":"Yu","ю":"yu","Я":"Ya","я":"ya"
-    }
-  },
-  BNF: {
-    ru: {
+      "Д":"D","д":"d","Ђ":"Đ","ђ":"đ","Е":"E","е":"e","Ж":"Ž","ж":"ž",
+      "З":"Z","з":"z","И":"I","и":"i","Ј":"J","ј":"j","К":"K","к":"k",
+      "Л":"L","л":"l","Љ":"Lj","љ":"lj","М":"M","м":"m","Н":"N","н":"n",
+      "Њ":"Nj","њ":"nj","О":"O","о":"o","П":"P","п":"p","Р":"R","р":"r",
+      "С":"S","с":"s","Т":"T","т":"t","Ћ":"Ć","ћ":"ć","У":"U","у":"u",
+      "Ф":"F","ф":"f","Х":"H","х":"h","Ц":"C","ц":"c","Ч":"Č","ч":"č",
+      "Џ":"Dž","џ":"dž","Ш":"Š","ш":"š"
+    },
+
+    bg: {
       "А":"A","а":"a","Б":"B","б":"b","В":"V","в":"v","Г":"G","г":"g",
-      "Д":"D","д":"d","Е":"E","е":"e","Ё":"Ë","ё":"ë","Ж":"Ž","ж":"ž",
-      "З":"Z","з":"z","И":"I","и":"i","Й":"Ĭ","й":"ĭ","К":"K","к",
-      "Л":"L","л":"l","М":"M","м":"m","Н":"N","н","О":"O","о",
-      "П":"P","п":"p","Р":"R","р":"r","С":"S","с","Т":"T","т","У":"U","у",
-      "Ф":"F","ф":"f","Х":"Kh","х":"kh","Ц":"Ts","ц":"ts","Ч":"Ch","ч",
-      "Ш":"Š","ш","Щ":"Št","щ":"št",
-      "Ы":"Y","ы":"y","Э":"È","э":"è","Ю":"I͡u","ю":"i͡u","Я":"I͡a","я":"i͡a"
+      "Д":"D","д":"d","Е":"E","е":"e","Ж":"Zh","ж":"zh","З":"Z","з":"z",
+      "И":"I","и":"i","Й":"Ĭ","й":"ĭ","К":"K","к":"k","Л":"L","л":"l",
+      "М":"M","м":"m","Н":"N","н":"n","О":"O","о":"o","П":"P","п":"p",
+      "Р":"R","р":"r","С":"S","с":"s","Т":"T","т":"t","У":"U","у":"u",
+      "Ф":"F","ф":"f","Х":"Kh","х":"kh","Ц":"Ts","ц":"ts",
+      "Ч":"Ch","ч":"ch","Ш":"Sh","ш":"sh","Щ":"Sht","щ":"sht",
+      "Ъ":"Ă","ъ":"ă","Ю":"Iu","ю":"iu","Я":"Ia","я":"ia"
+    }
+  }
+
+  
+};
+
+
+// =========================
+// REVERSE PREFERRED VARIANTS
+// =========================
+const reversePreferred = {
+  ALA: {
+    ru: {
+      "E": "Е",
+      "e": "е",
+      "Ë": "Ё",
+      "Zh": "Ж",
+      "zh": "ж",
+      "Ĭ": "Й",
+      "ĭ": "й",
+      "Kh": "Х",
+      "kh": "х",
+      "TS": "Ц",
+      "t͡s": "ц",
+      "Ch": "Ч",
+      "ch": "ч",
+      "Sh": "Ш",
+      "sh": "ш",
+      "Shch": "Щ",
+      "shch": "щ",
+      "Y": "Ы",
+      "y": "ы",
+      "IU": "Ю",
+      "iu": "ю",
+      "IA": "Я",
+      "ia": "я",
+      "ʹ": "Ь",
+      "ʺ": "Ъ"
     }
   }
 };
 
+
+
+
 // =========================
-// AMBIGUITÄTEN
+// FUNKTIONEN
 // =========================
-const ambiguous = {
-  ru: {
-    DIN: { "ch":["Х","Ч"], "šč":["Щ","ШЧ"], "e":["Е","Э"], "j":["Й","Ь"] },
-    ALA: { "Kh":["Х"], "Shch":["Щ"], "I͡u":["Ю"], "I͡a":["Я"] },
-    BL:  { "Kh":["Х"], "Shch":["Щ"], "Yu":["Ю"], "Ya":["Я"] },
-    BNF: { "Kh":["Х"], "Št":["Щ"], "I͡u":["Ю"], "I͡a":["Я"] }
+function transliterieren() {
+  const text = document.getElementById("input").value;
+  const lang = document.getElementById("lang").value;
+  const system = document.getElementById("system").value;
+
+  const map = tables[system][lang];
+  if(!map){
+    alert("Keine Tabelle für diese Kombination von Sprache und System!");
+    return;
   }
-};
 
-// =========================
-// HILFSFUNKTIONEN
-// =========================
-function escapeRegExp(string) { return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
-
-function transliterate(text, system, lang) {
-  const map = systems[system][lang];
-  for (let k in map) text = text.split(k).join(map[k]);
-  return text;
-}
-
-function reverseTransliterate(text, system, lang) {
-  const map = systems[system][lang];
-  const reverse = {};
-  for (let k in map) reverse[map[k]] = k;
-  const keys = Object.keys(reverse).sort((a,b)=>b.length-a.length);
-  for (let k of keys) text = text.split(k).join(reverse[k]);
-  return text;
-}
-
-function markAmbiguous(text, lang, system) {
-  const amb = ambiguous?.[lang]?.[system];
-  if(!amb) return text;
-  const keys = Object.keys(amb).sort((a,b)=>b.length-a.length);
-  for(const k of keys){
-    const latinEquivs = amb[k].map(cyr=>systems[system][lang][cyr]).filter(Boolean);
-    latinEquivs.forEach(lat=>{
-      const re = new RegExp(escapeRegExp(lat),"g");
-      text = text.replace(re, `<span class="ambig">${lat}</span>`);
-    });
+  let result = text;
+  for (let key in map) {
+    result = result.split(key).join(map[key]);
   }
-  return text;
+
+  document.getElementById("output").value = result;
 }
 
-// =========================
-// BUTTON-FUNKTIONEN
-// =========================
-function doTransliteration() {
-  const text = input.value;
-  const lang = langSelect.value;
-  const system = systemFrom.value;
-  const result = transliterate(text, system, lang);
-  output.value = result;
-  outputView.innerHTML = markAmbiguous(result, lang, system);
+
+function ruecktransliterieren() {
+  const text = document.getElementById("input").value;
+  const lang = document.getElementById("lang").value;
+  const system = document.getElementById("system").value;
+
+  const map = tables[system]?.[lang];
+  if (!map) {
+    alert("Keine Tabelle für diese Kombination von Sprache und System!");
+    return;
+  }
+
+
+  const preferred = reversePreferred[system]?.[lang] || {};
+
+
+  let reverse = {};
+  for (let key in map) {
+    if (!(map[key] in preferred)) { 
+      reverse[map[key]] = key;
+    }
+  }
+
+ 
+  reverse = { ...reverse, ...preferred };
+
+
+  const keys = Object.keys(reverse).sort((a, b) => b.length - a.length);
+
+  let result = text;
+  for (let k of keys) {
+    result = result.split(k).join(reverse[k]);
+  }
+
+  document.getElementById("output").value = result;
 }
 
-function doReverse() {
-  const text = input.value;
-  const lang = langSelect.value;
-  const system = systemFrom.value;
-  const result = reverseTransliterate(text, system, lang);
-  output.value = result;
-  outputView.innerHTML = markAmbiguous(result, lang, system);
-}
-
-function doUmtransliteration() {
-  const text = input.value;
-  const lang = langSelect.value;
-  const from = systemFrom.value;
-  const to = systemTo.value;
-  const kyr = reverseTransliterate(text, from, lang);
-  const result = transliterate(kyr, to, lang);
-  output.value = result;
-  outputView.innerHTML = markAmbiguous(result, lang, to);
-}
-
-function copyOutput() { navigator.clipboard.writeText(output.value); }
-
-// =========================
-// INPUT EVENT
-// =========================
-inputView.addEventListener("input", ()=>{
-  input.value = inputView.innerText; // Rohtext speichern
-  doTransliteration();
-});
 </script>
+
+
+<body>
+
+<h1>Transliteration</h1>
+
+<label for="lang">Sprache:</label>
+<select id="lang">
+  <option value="ru">Russisch</option>
+  <option value="uk">Ukrainisch</option>
+  <option value="be">Belarussisch</option>
+  <option value="sr">Serbisch</option>
+  <option value="bg">Bulgarisch</option>
+</select>
+
+<label for="system">Transliterationssystem:</label>
+<select id="system">
+  <option value="DIN">DIN 1460</option>
+  <option value="ALA">ALA-LC</option>
+  
+  
+</select>
+
+<h3>Eingabetext</h3>
+<textarea id="input" placeholder="Kyrillischen Text hier eingeben"></textarea>
+
+<button onclick="transliterieren()">Transliterieren</button>
+
+
+<button onclick="ruecktransliterieren()">Rücktransliteration</button>
+
+<h3>Ausgabe</h3>
+<textarea id="output" placeholder="Ergebnis"></textarea>
+
+
 </body>
 </html>
