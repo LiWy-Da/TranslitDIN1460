@@ -5,23 +5,126 @@
 <title>Transliterationstool</title>
 
 <style>
+/* =========================
+   1. Grundlayout und Schrift
+   ========================= */
 body {
   font-family: sans-serif;
   max-width: 900px;
   margin: 2rem auto;
+  padding: 0 1rem;
+  background-color: #fff1f8; /* helles Rosa als Seitenhintergrund */
 }
+
+/* =========================
+   2. Dropdowns nebeneinander
+   ========================= */
+.dropdown-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.dropdown-row label {
+  margin: 0;
+  white-space: nowrap;
+}
+
+/* =========================
+   3. Textareas verschönern
+   ========================= */
 textarea {
   width: 100%;
   height: 160px;
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid #ffcce0; /* rosa Rahmen */
+  font-family: monospace;
+  font-size: 14px;
+  line-height: 1.4;
+  box-shadow: inset 0 1px 3px rgba(255,182,193,0.3); /* rosa Schatten innen */
+  transition: border-color 0.2s, box-shadow 0.2s;
+  background-color: #fff7f9; /* sehr helles Rosa */
 }
-select, button {
-  margin-top: 0.5rem;
-  margin-right: 0.5rem;
+
+textarea:focus {
+  border-color: #ff69b4; /* kräftiges Pink */
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(255,105,180,0.2) inset; /* rosa Glow */
 }
-label {
-  display:block;
-  margin-top:0.5rem;
+
+/* =========================
+   4. Buttons verschönern
+   ========================= */
+button {
+  background-color: #ffd966; /* helles Gelb */
+  color: #800080;             /* dunkles Lila für Kontrast */
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.2s, transform 0.1s;
 }
+
+button:hover {
+  background-color: #ffec99; /* etwas helleres Gelb beim Hover */
+  transform: scale(1.05);    /* kleiner Hover-Effekt */
+}
+
+/* =========================
+   5. Copy-Status
+   ========================= */
+#copyStatus {
+  margin-left: 0.5rem;
+  color: #ff69b4; /* Pink statt Grün */
+  font-weight: bold;
+}
+
+/* =========================
+   6. Overlay-Highlight-Funktion
+   ========================= */
+.overlay-container {
+  position: relative;
+}
+
+.overlay-container .highlight {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1;
+  width: 100%;
+  height: 160px;
+  font-family: monospace;
+  font-size: 14px;
+  line-height: 1.4;
+  padding: 8px;
+  box-sizing: border-box;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  pointer-events: none;
+  color: black;
+}
+
+.overlay-container textarea {
+  position: relative;
+  z-index: 2;
+  background: transparent;
+  color: black;
+  caret-color: black;
+  resize: vertical;
+}
+
+/* =========================
+   7. Highlight-Farbe
+   ========================= */
+mark {
+  background: #fff176; /* sonniges Gelb für Highlights */
+  color: black;
+}
+
 </style>
 </head>
 
@@ -196,9 +299,16 @@ function transliterieren() {
 
 
 function ruecktransliterieren() {
-  const text = document.getElementById("input").value;
+  let text = document.getElementById("input").value;
   const lang = document.getElementById("lang").value;
   const system = document.getElementById("system").value;
+
+  // -------------------------
+  // Vor der Rücktransliteration normalisieren
+  // -------------------------
+  if (system === "ALA") {
+    text = denormalizeALA(text);
+  }
 
   const map = tables[system]?.[lang];
   if (!map) {
@@ -206,9 +316,7 @@ function ruecktransliterieren() {
     return;
   }
 
-
   const preferred = reversePreferred[system]?.[lang] || {};
-
 
   let reverse = {};
   for (let key in map) {
@@ -217,12 +325,13 @@ function ruecktransliterieren() {
     }
   }
 
- 
   reverse = { ...reverse, ...preferred };
-
 
   const keys = Object.keys(reverse).sort((a, b) => b.length - a.length);
 
+  // -------------------------
+  // Rücktransliteration
+  // -------------------------
   let result = text;
   for (let k of keys) {
     result = result.split(k).join(reverse[k]);
@@ -230,6 +339,129 @@ function ruecktransliterieren() {
 
   document.getElementById("output").value = result;
 }
+function umtransliterieren() {
+  let input = document.getElementById("input").value;
+  const lang = document.getElementById("lang").value;
+
+  const sourceSystem = document.getElementById("system").value;
+  const targetSystem = document.getElementById("targetSystem").value;
+
+  if (sourceSystem === targetSystem) {
+    alert("Quell- und Zielsystem sind identisch.");
+    return;
+  }
+
+  const sourceMap = tables[sourceSystem]?.[lang];
+  const targetMap = tables[targetSystem]?.[lang];
+
+  if (!sourceMap || !targetMap) {
+    alert("Keine Tabelle für diese Kombination vorhanden.");
+    return;
+  }
+
+  // -------------------------
+  // 0) Normalisierung für ALA-Kombinationen
+  // -------------------------
+  if (sourceSystem === "ALA") {
+    input = denormalizeALA(input);
+  }
+
+  // -------------------------
+  // 1) Rücktransliteration → Kyrillisch
+  // -------------------------
+  const preferred = reversePreferred[sourceSystem]?.[lang] || {};
+  let reverse = {};
+  for (let key in sourceMap) {
+    if (!(sourceMap[key] in preferred)) {
+      reverse[sourceMap[key]] = key;
+    }
+  }
+  reverse = { ...reverse, ...preferred };
+  const reverseKeys = Object.keys(reverse).sort((a, b) => b.length - a.length);
+
+  let cyrillic = input;
+  for (let k of reverseKeys) {
+    cyrillic = cyrillic.split(k).join(reverse[k]);
+  }
+
+  // -------------------------
+  // 2) Vorwärtstransliteration → Zielsystem
+  // -------------------------
+  let result = cyrillic;
+  for (let key in targetMap) {
+    result = result.split(key).join(targetMap[key]);
+  }
+
+  document.getElementById("output").value = result;
+}
+
+// =========================
+// Hilfsfunktion: Normalisierung ALA
+// =========================
+function denormalizeALA(text) {
+  const denormMap = {
+    "T͡S": "TS",
+    "t͡s": "ts",
+    "I͡A": "IA",
+    "i͡a": "ia",
+    "I͡U": "IU",
+    "i͡u": "iu",
+    "I͡E": "IE",
+    "i͡e": "ie"
+  };
+
+  const keys = Object.keys(denormMap).sort((a, b) => b.length - a.length);
+
+  let result = text;
+  for (let k of keys) {
+    const re = new RegExp(k, "g");
+    result = result.replace(re, denormMap[k]);
+  }
+  return result;
+}
+
+
+function copyOutput() {
+  const output = document.getElementById("output");
+
+  if (!output.value) {
+    alert("Kein Text zum Kopieren vorhanden!");
+    return;
+  }
+
+  output.select();
+  output.setSelectionRange(0, 99999); // für mobile Geräte
+
+  navigator.clipboard.writeText(output.value)
+    .then(() => {
+      document.getElementById("copyStatus").textContent = "✓ Kopiert";
+      setTimeout(() => {
+        document.getElementById("copyStatus").textContent = "";
+      }, 1500);
+    })
+    .catch(() => {
+      alert("Kopieren fehlgeschlagen.");
+    });
+}
+// =========================
+// SESSION-SPEICHER FÜR DROPDOWN-WERTE
+// =========================
+document.addEventListener("DOMContentLoaded", () => {
+  const dropdowns = ["system", "lang", "targetSystem"];
+
+  dropdowns.forEach(id => {
+    const el = document.getElementById(id);
+
+    // 1) Wert beim Laden wiederherstellen
+    const saved = sessionStorage.getItem(id);
+    if (saved) el.value = saved;
+
+    // 2) Wert speichern, wenn sich der Dropdown ändert
+    el.addEventListener("change", () => {
+      sessionStorage.setItem(id, el.value);
+    });
+  });
+});
 
 </script>
 
@@ -237,23 +469,35 @@ function ruecktransliterieren() {
 <body>
 
 <h1>Transliteration</h1>
+<div class="dropdown-row">
+  <div>
+    <label for="lang">Sprache:</label>
+    <select id="lang">
+      <option value="ru">Russisch</option>
+      <option value="uk">Ukrainisch</option>
+      <option value="be">Belarussisch</option>
+      <option value="sr">Serbisch</option>
+      <option value="bg">Bulgarisch</option>
+    </select>
+  </div>
 
-<label for="lang">Sprache:</label>
-<select id="lang">
-  <option value="ru">Russisch</option>
-  <option value="uk">Ukrainisch</option>
-  <option value="be">Belarussisch</option>
-  <option value="sr">Serbisch</option>
-  <option value="bg">Bulgarisch</option>
-</select>
+  <div>
+    <label for="system">System 1:</label>
+    <select id="system">
+      <option value="DIN">DIN 1460</option>
+      <option value="ALA">ALA-LC</option>
+    </select>
+  </div>
 
-<label for="system">Transliterationssystem:</label>
-<select id="system">
-  <option value="DIN">DIN 1460</option>
-  <option value="ALA">ALA-LC</option>
-  
-  
-</select>
+  <div>
+    <label for="targetSystem">Umtransliterieren nach:</label>
+    <select id="targetSystem">
+      <option value="DIN">DIN 1460</option>
+      <option value="ALA">ALA-LC</option>
+    </select>
+  </div>
+</div>
+
 
 <h3>Eingabetext</h3>
 <textarea id="input" placeholder="Kyrillischen Text hier eingeben"></textarea>
@@ -262,9 +506,12 @@ function ruecktransliterieren() {
 
 
 <button onclick="ruecktransliterieren()">Rücktransliteration</button>
+<button onclick="umtransliterieren()">Umtransliterieren</button>
 
 <h3>Ausgabe</h3>
 <textarea id="output" placeholder="Ergebnis"></textarea>
+<button onclick="copyOutput()">Kopieren</button>
+<span id="copyStatus" style="margin-left:0.5rem;"></span>
 
 
 </body>
