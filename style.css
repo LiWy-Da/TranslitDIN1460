@@ -1,0 +1,159 @@
+
+/* =========================
+   1. Grundlayout und Schrift
+   ========================= */
+body {
+  font-family: 'Segoe UI', sans-serif;
+  max-width: 900px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+  background-color: #fff8f2; /* sehr helles Pastell-Rosa-Creme */
+  color: #4d0033; /* dunkles Lila für Text */
+}
+
+/* =========================
+   2. Dropdowns nebeneinander
+   ========================= */
+.dropdown-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.dropdown-row label {
+  margin: 0;
+  white-space: nowrap;
+  font-weight: 600;
+  color: #ff6f91; /* sanftes Pastell-Pink für Labels */
+}
+
+select {
+  border: 2px solid #ffd97d; /* sanftes Apricot-Gelb */
+  border-radius: 8px;
+  padding: 0.4rem 0.6rem;
+  background-color: #fff3e6; /* helles Apricot */
+  color: #4d0033;
+  font-weight: 500;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+select:focus {
+  border-color: #ffcc80; /* helles Gelb beim Fokus */
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(255,204,128,0.2);
+}
+
+/* =========================
+   3. Textareas verschönern
+   ========================= */
+textarea {
+  width: 100%;
+  height: 160px;
+  padding: 12px;
+  border-radius: 12px;
+  border: 2px solid #ffe0a3; /* sanftes Apricot-Gelb */
+  font-family: monospace;
+  font-size: 14px;
+  line-height: 1.5;
+  box-shadow: inset 0 2px 5px rgba(255,223,128,0.3);
+  transition: border-color 0.3s, box-shadow 0.3s;
+  background-color: #fff8ec; /* sehr helles Gelb-Creme */
+}
+
+textarea:focus {
+  border-color: #ffd54f; /* kräftigeres Gelb beim Fokus */
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(255,213,79,0.15) inset;
+}
+
+/* =========================
+   4. Buttons rund und pastellig
+   ========================= */
+button {
+  background-color: #ffe066; /* Sonnengelb */
+  color: #4d0033; /* dunkles Lila */
+  border: none;
+  padding: 0.6rem 1.2rem;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: background-color 0.2s, transform 0.1s, box-shadow 0.2s;
+  box-shadow: 0 2px 5px rgba(255,204,102,0.3);
+}
+
+button:hover {
+  background-color: #ffd54f; /* helleres Gelb */
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(255,204,102,0.4);
+}
+button.copy {
+  background-color: #ffd1dc; /* sehr sanftes Rosé */
+  color: #4d0033;
+  font-weight: 500;
+  box-shadow: 0 1px 3px rgba(255,111,145,0.25);
+}
+
+button.copy:hover {
+  background-color: #ffdde5; /* minimal heller */
+  transform: none; /* kein Hochspringen */
+  box-shadow: 0 2px 4px rgba(255,111,145,0.3);
+}
+
+/* =========================
+   5. Copy-Status
+   ========================= */
+#copyStatus {
+  margin-left: 0.5rem;
+  color: #ff8fa3; /* dezentes Pink */
+  font-weight: bold;
+  font-size: 14px;
+}
+
+/* =========================
+   6. Overlay-Highlight
+   ========================= */
+.overlay-container {
+  position: relative;
+}
+
+.overlay-container .highlight {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1;
+  width: 100%;
+  height: 160px;
+  font-family: monospace;
+  font-size: 14px;
+  line-height: 1.5;
+  padding: 12px;
+  box-sizing: border-box;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  pointer-events: none;
+  color: black;
+}
+
+.overlay-container textarea {
+  position: relative;
+  z-index: 2;
+  background: transparent;
+  color: black;
+  caret-color: black;
+  resize: vertical;
+  border-radius: 12px;
+}
+
+/* =========================
+   7. Highlight-Farbe
+   ========================= */
+mark {
+  background: #fff59d; /* weiches Sonnengelb */
+  color: #4d0033; /* dunkles Lila für Kontrast */
+  border-radius: 4px;
+  padding: 0 2px;
+}
+
