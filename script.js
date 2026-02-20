@@ -138,11 +138,23 @@ const reversePreferred = {
       "i͡a": "я",
       "ʹ": "ь",
       "ʺ": "ъ"
+    },
+   uk: {
+      "ʹ": "ь"
+    },
+   be: {
+      "E": "Е",
+      "e": "е"
     }
+  },
   DIN: {
    ru: {
       "ʹ": "ь",
       "ʺ": "ъ"
+    },
+   uk: {
+      "ʹ": "ь"
+    }
   }
 };
 
@@ -153,7 +165,9 @@ const reversePreferred = {
 // FUNKTIONEN
 // =========================
 function transliterieren() {
-  const text = document.getElementById("input").value;
+  let text = document.getElementById("input").value;
+// Unicode-Normalisierung: vereinheitlicht alle diakritischen Zeichen
+text = text.normalize("NFC");
   const lang = document.getElementById("lang").value;
   const system = document.getElementById("system").value;
 
@@ -161,34 +175,45 @@ function transliterieren() {
   if(!map){
     alert("Keine Tabelle für diese Kombination von Sprache und System!");
     return;
-  }
+  };
+  const { protectedText, protectedParts } = protectSingleAfterDollar(text);
+  let result = protectedText;
 
-  let result = text;
   for (let key in map) {
     result = result.split(key).join(map[key]);
   }
-
+  result = restoreProtected(result, protectedParts);
   document.getElementById("output").value = result;
 }
 
-
 function ruecktransliterieren() {
   let text = document.getElementById("input").value;
+// Unicode-Normalisierung: vereinheitlicht alle diakritischen Zeichen
+text = text.normalize("NFC");
+
   const lang = document.getElementById("lang").value;
   const system = document.getElementById("system").value;
 
   // -------------------------
-  // Vor der Rücktransliteration normalisieren
+  // Allgemeine Apostroph-Normalisierung
+  // -------------------------
+  text = normalizeSoftSignVariants(text);
+
+  // -------------------------
+  // ALA-spezifische Normalisierung
   // -------------------------
   if (system === "ALA") {
     text = denormalizeALA(text);
   }
 
+
   const map = tables[system]?.[lang];
   if (!map) {
     alert("Keine Tabelle für diese Kombination von Sprache und System!");
     return;
-  }
+  };
+
+
 
   const preferred = reversePreferred[system]?.[lang] || {};
 
@@ -206,15 +231,18 @@ function ruecktransliterieren() {
   // -------------------------
   // Rücktransliteration
   // -------------------------
-  let result = text;
+const { protectedText, protectedParts } = protectSingleAfterDollar(text);
+let result = protectedText;
   for (let k of keys) {
     result = result.split(k).join(reverse[k]);
   }
-
+result = restoreProtected(result, protectedParts);
   document.getElementById("output").value = result;
 }
 function umtransliterieren() {
   let input = document.getElementById("input").value;
+// Unicode-Normalisierung: vereinheitlicht alle diakritischen Zeichen
+input = input.normalize("NFC");
   const lang = document.getElementById("lang").value;
 
   const sourceSystem = document.getElementById("system").value;
@@ -268,7 +296,33 @@ function umtransliterieren() {
 
   document.getElementById("output").value = result;
 }
+// =========================
+// Hilfsfunktion: $$ + genau 1 Zeichen schützen
+// =========================
+function protectSingleAfterDollar(text) {
+  const protectedParts = [];
+  let index = 0;
 
+  // Verwende einen "sicheren" Platzhalter, der nie in Map vorkommt
+  text = text.replace(/\$\$(.)/g, (match, char) => {
+    const placeholder = `\uFFF0${index}\uFFF1`;  // sichere Unicode-Zeichen
+    protectedParts.push({ placeholder, replacement: `$$${char}` });
+    index++;
+    return placeholder;
+  });
+
+  return { protectedText: text, protectedParts };
+}
+
+function restoreProtected(text, protectedParts) {
+  if (!protectedParts) return text;
+
+  for (const { placeholder, replacement } of protectedParts) {
+    text = text.split(placeholder).join(replacement);
+  }
+
+  return text;
+}
 // =========================
 // Hilfsfunktion: Normalisierung ALA
 // =========================
@@ -284,6 +338,7 @@ function denormalizeALA(text) {
     "ie": "i͡e"
   };
 
+
   const keys = Object.keys(denormMap).sort((a, b) => b.length - a.length);
 
   let result = text;
@@ -293,7 +348,12 @@ function denormalizeALA(text) {
   }
   return result;
 }
-
+// =========================
+// Hilfsfunktion: Apostroph-Normalisierung
+// =========================
+function normalizeSoftSignVariants(text) {
+  return text.replace(/['´`]/g, "ʹ");
+}
 
 function copyOutput() {
   const output = document.getElementById("output");
@@ -336,4 +396,3 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 });
-
